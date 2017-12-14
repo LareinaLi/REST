@@ -1,3 +1,3 @@
-cd workerData
+cd repoData
 
 git reset --hard $1
