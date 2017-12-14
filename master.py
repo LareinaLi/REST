@@ -1,7 +1,6 @@
 import json
 import time
 import requests
-import subprocess
 from flask import Flask
 from flask_restful import Resource, Api, reqparse
 
@@ -12,7 +11,7 @@ api = Api(app)
 class Master():
     def __init__(self):
         self.startTime = 0.0
-        print('Work on the default repository: https://github.com/rubik/radon\n')
+        print('Work on the default repository: https://github.com/rubik/radon')
         self.workerTotal = int(input('Please input the number of workers you need: '))
         self.workerNum = 0
 
