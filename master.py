@@ -1,7 +1,7 @@
 import json
 import time
-import request
-import getpass
+import requests
+import subprocess
 from flask import Flask
 from flask_restful import Resource, Api, reqparse
 
@@ -9,37 +9,33 @@ app = Flask(__name__)
 api = Api(app)
 
 
-class Master:
+class Master():
     def __init__(self):
         self.startTime = 0.0
-        self.workerTotal = int(input('The number of workers you need: '))
-        self.workerNum = 0.0
-
-        githubID = input('Please input your Github username or email address: ')
-        githubPwd = getpass.getpass('Please input your password: ')
+        print('Work on the default repository: https://github.com/rubik/radon\n')
+        self.workerTotal = int(input('Please input the number of workers you need: '))
+        self.workerNum = 0
 
         self.commitList = []
         currentPage = 1
         morePage = True
 
         while morePage:
-            commitURL = 'https://api.github.com/repos/rubik/radon/commits?page=' + currentPage + '&per_page=100'
-            if len(githubID) == 0:
-                response = requests.get(commitURL)
-            else:
-                response = requests.get(commitURL, auth=(githubID, githubPwd))
-            self.data = json.loads(response.text)
+            commitURL = 'https://api.github.com/repos/rubik/radon/commits?page=' + str(currentPage) + '&per_page=100'
+            response = requests.get(commitURL)
+            data = json.loads(response.text)
             if len(data) < 2:
                 morePage = False
-            currentPage += 1
+                print('No more pages.')
+            else:
+                for d in data:
+                    self.commitList.append(d['sha'])
+                    print('Commit Sha:', str(d['sha']))
+                currentPage += 1
 
-        for d in self.data:
-            self.commitList.append(d['sha'])
         self.commitNum = len(self.commitList)
-        print('Total number of commits is: ', self.commitNum)
-
         self.complexityList = []
-
+        print('Total number of commits is: ', str(self.commitNum))
 
 class getRepo(Resource):
     def __init__(self):
@@ -56,8 +52,8 @@ class getRepo(Resource):
         if args['pullStatus']:
             self.master.workerNum += 1
             if self.master.workerNum == self.master.workerTotal:
-                self.master.startTime = time()
-            print('The number of workers is: ', self.master.workerNum)
+                self.master.startTime = time.time()
+            print('The number of workers is: ', str(self.master.workerNum))
 
     def post(self):
         pass
@@ -66,25 +62,27 @@ class getRepo(Resource):
 class Complexity(Resource):
     def __init__(self):
         self.master = m
-        self.parser = reqparse.RequestParser()
-        self.reqparser.add_argument('commit', type=str, location='json')
-        self.reqparser.add_argument('complexity', type=str, location='json')
+        self.reqparser = reqparse.RequestParser()
+        self.reqparser.add_argument('commitSha', type=str, location='json')
+        self.reqparser.add_argument('complexity', type=float, location='json')
 
     def get(self):
-        if self.master.workerNum < self.master.workerSum:
-            return {'sha': -1}
+        if self.master.workerNum < self.master.workerTotal:
+            time.sleep(0.1)
+            return {'sha': -2}
         if len(self.master.commitList) == 0:
-            return {'commit': 0}
+            return {'sha': -1}
         commit = self.master.commitList[0]
         del self.master.commitList[0]
-        return {'commit': commit}
+        print(commit)
+        return {'sha': commit}
 
     def post(self):
         args = self.reqparser.parse_args()
         self.master.complexityList.append({'sha': args['commitSha'], 'complexity': args['complexity']})
         if len(self.master.complexityList) == self.master.commitNum:
-            endTime = time() - self.master.startTime
-            totalComplexity = 0
+            endTime = time.time() - self.master.startTime
+            totalComplexity = 0.0
             for c in self.master.complexityList:
                 if float(c['complexity']) > 0:
                     totalComplexity += float(c['complexity'])
@@ -95,7 +93,7 @@ class Complexity(Resource):
             print('Calculate Time: ', endTime, ' seconds\n')
         return {'success': True}
 
-
+api.add_resource(getRepo, "/repo", endpoint="repo")
 api.add_resource(Complexity, "/complexity", endpoint="complexity")
 
 if __name__ == '__main__':
