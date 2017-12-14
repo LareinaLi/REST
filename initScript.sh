@@ -1,4 +1,4 @@
-cd workerData
+cd repoData
 
 rm -rf .git/
 
