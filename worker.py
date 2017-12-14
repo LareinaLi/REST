@@ -1,7 +1,6 @@
-import request
+import requests
 import json
-import os
-import commands
+import subprocess
 
 
 def Worker():
@@ -9,13 +8,13 @@ def Worker():
     response = requests.get(masterURL, json={'pullStatus': False})
     data = json.loads(response.text)
     repoURL = data['repo']
-    cmdLine = 'cd repoData &' \
-              'rm -rf .git/ &' \
-              'git init &' \
-              'git remote add origin {} &' \
-              'git pull'.format(repoURL)
-    result = commands.getoutput(cmdLine)
-    print(result.decode())
+    bashCommand = "cd repoData &" \
+                  "rm -rf .git/ &" \
+                  "git init &" \
+                  "git remote add origin {} &" \
+                  "git branch --set-upstream-to=origin/<branch> master & " \
+                  "git pull".format(repoURL)
+    subprocess.Popen(bashCommand, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     response = requests.get(masterURL, json={'pullStatus': True})
 
     finishNum = 0
@@ -24,22 +23,36 @@ def Worker():
         response = requests.get('http://127.0.0.1:9999/complexity')
         data = json.loads(response.text)
         print(data)
-        if data['sha'] == -1:
+        print('Received: ', str(data['sha']))
+
+        if data['sha'] == -2:
             print('Waiting for enough workers.')
         else:
-            if data['sha'] == 0:
+            if data['sha'] == -1:
                 print('No more commit.')
                 break
-            cmdLine = 'cd repoData &' \
-                      'git reset --hard {}'.data['sha']
-            result = commands.getoutput(cmdLine)
-            print(result.decode())
 
-            cmdLine = 'radon cc -a -s ' + repoData
-            result = commands.getoutput(cmdLine)
-            print(result.decode())
+            bashCommand = "cd repoData &" \
+                          "git reset --hard {}".format(data['sha'])
+            subprocess.Popen(bashCommand, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
+            cmdLine = 'radon cc -a -s repoData'
+            result = subprocess.check_output(cmdLine).decode()
+            print(result)
+
+            aveComplexityPos = result.rfind('(')
+            if result[aveComplexityPos + 1:-2] == '':
+                print('No computable files.')
+                response = requests.post('http://127.0.0.1:9999/complexity',
+                                         json={'commitSha': data['sha'], 'complexity': -1})
+            else:
+                aveComplexity = float(result[aveComplexityPos + 1:-2])
+                response = requests.post('http://127.0.0.1:9999/complexity',
+                                         json={'commit': data['sha'], 'complexity': aveComplexity})
+
             finishNum += 1
-    print('The number of commits have been calculated is: ', finishNum)
+    print('The number of commits have been calculated is: ', str(finishNum))
+
 
 if __name__ == '__main__':
     Worker()
