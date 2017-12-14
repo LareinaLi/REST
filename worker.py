@@ -12,7 +12,6 @@ def Worker():
                   "rm -rf .git/ &" \
                   "git init &" \
                   "git remote add origin {} &" \
-                  "git branch --set-upstream-to=origin/<branch> master & " \
                   "git pull".format(repoURL)
     subprocess.Popen(bashCommand, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     response = requests.get(masterURL, json={'pullStatus': True})
