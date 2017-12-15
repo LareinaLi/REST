@@ -11,7 +11,7 @@ api = Api(app)
 class Master():
     def __init__(self):
         self.startTime = 0.0
-        print('Work on the default repository: https://github.com/rubik/radon')
+        print('Work on the default repository: https://github.com/PyCQA/mccabe')
         self.workerTotal = int(input('Please input the number of workers you need: '))
         self.workerNum = 0
 
@@ -20,7 +20,7 @@ class Master():
         morePage = True
 
         while morePage:
-            commitURL = 'https://api.github.com/repos/rubik/radon/commits?page=' + str(currentPage) + '&per_page=100'
+            commitURL = 'https://api.github.com/repos/PyCQA/mccabe/commits?page=' + str(currentPage) + '&per_page=100'
             response = requests.get(commitURL)
             data = json.loads(response.text)
             if len(data) < 2:
@@ -47,7 +47,7 @@ class getRepo(Resource):
         args = self.reqparser.parse_args()
         if not args['pullStatus']:
             print('Got 1')
-            return {'repo': 'https://github.com/rubik/radon'}
+            return {'repo': 'https://github.com/PyCQA/mccabe'}
         if args['pullStatus']:
             self.master.workerNum += 1
             if self.master.workerNum == self.master.workerTotal:
