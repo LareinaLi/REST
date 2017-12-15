@@ -23,4 +23,6 @@ python master.py  # must imput the number of workers you need
 python worker.py  # must run for times, just equals to the number you input in 'master.py'
 ```
 
-The problem is it can run with one worker at the moment, but something wrong when running with more than one worker. I will try to fix this problem.
+The results of this system is stored in the file 'Result.pdf'. Time is calculated in seconds.
+
+I have teste with 1 to 10 workers to see what happened. At the first stage, the time spent decreased as the number of worker increased. But when there are over 7 workers, the time increased. I think that's because there are only 109 commits, and the master would spend more time to assign works, which increase the calculating time.
