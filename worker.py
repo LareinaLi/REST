@@ -40,13 +40,22 @@ def Worker():
             print(result)
 
             aveComplexityPos = result.rfind('(')
+            if result.find("ERROR") != -1:
+                response = requests.post('http://127.0.0.1:9999/complexity', 
+                                         json={'commitSha': data['sha'], 'complexity': 0})
             if result[aveComplexityPos + 1:-2] == '':
                 print('No computable files.')
                 response = requests.post('http://127.0.0.1:9999/complexity',
                                          json={'commitSha': data['sha'], 'complexity': -1})
             else:
-                aveComplexity = float(result[aveComplexityPos + 1:-2])
-                response = requests.post('http://127.0.0.1:9999/complexity',
+                temp = result[result.rfind('(') + 1:-2].replace(')', '').replace('\r', '').replace('\n', '').replace('"', '')
+                
+                if temp is None:
+                    response = requests.post('http://127.0.0.1:9999/complexity',
+                                         json={'commit': data['sha'], 'complexity': 0})
+                else:
+                    aveComplexity = float(temp)
+                    response = requests.post('http://127.0.0.1:9999/complexity',
                                          json={'commit': data['sha'], 'complexity': aveComplexity})
 
             finishNum += 1
