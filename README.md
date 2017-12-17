@@ -26,3 +26,6 @@ python worker.py  # must run for times, just equals to the number you input in '
 The results of this system is stored in the file 'Result.pdf'. Time is calculated in seconds.
 
 I have teste with 1 to 10 workers to see what happened. At the first stage, the time spent decreased as the number of worker increased. But when there are over 7 workers, the time increased. I think that's because there are only 109 commits, and the master would spend more time to assign works, which increase the calculating time.
+
+
+Reference: https://github.com/suttonr0/Flask-RESTful-Cluster-Computing
